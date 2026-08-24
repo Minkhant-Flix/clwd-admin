@@ -1,5 +1,5 @@
 // ==================== CONFIGURATION ====================
-const API_URL = "https://uat-api.mmovie.site/";
+const API_URL = "https://clwd-api.mmovie.site/";
 let allPosts = [];
 let allAds = [];
 let loginAttempts = 0;
