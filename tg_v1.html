@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Telegram Channel Post Generator</title>
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <link rel="stylesheet" type="text/css" href="./tg/tg_style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📢 Telegram & Facebook Post Generator</h1>
+            <p>Movie & Animation Post Generator with Database</p>
+        </div>
+
+        <div class="main-layout">
+            <!-- Left Panel: Form -->
+            <div class="card">
+                <h2>📝 Create New Post</h2>
+                
+                <div class="form-group">
+                    <label>🎬 Movie Name</label>
+                    <input type="text" id="movieName" placeholder="Eg: Skyscraper" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label>📅 Year</label>
+                    <input type="text" id="year" placeholder="Eg: 2018" maxlength="4" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label>🎯 Type</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="type" value="movie" checked> 🎥 Movie
+                        </label>
+                        <label>
+                            <input type="radio" name="type" value="animation"> 🎨 Animation
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="channelGroup">
+                    <label>📢 Select Channel</label>
+                    <div class="channel-options" id="channelList">
+                        <div class="loading">Loading channels...</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>🎬 Video Quality</label>
+                    <div class="quality-buttons" id="qualityGroup">
+                        <div class="quality-btn" data-quality="720">720P</div>
+                        <div class="quality-btn" data-quality="1080">1080P</div>
+                        <div class="quality-btn" data-quality="4k">4K</div>
+                    </div>
+                    <input type="hidden" id="videoQuality" value="720">
+                </div>
+
+                <button class="btn btn-primary" id="generateBtn" onclick="generatePost()">
+                    ✨ Generate & Save Post
+                </button>
+
+                <div class="preview-area" id="previewArea" style="display: none;">
+                    <label>📄 Generated Posts (Telegram + Facebook)</label>
+                    <div class="preview-box" id="previewText"></div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" style="flex: 1; min-width: 120px;" onclick="copyToClipboard()">📋 Copy Both</button>
+                        <button class="btn btn-secondary" style="flex: 1; min-width: 120px; background: #0088cc;" onclick="copyTelegramOnly()">📱 Copy Telegram Only</button>
+                        <button class="btn btn-secondary" style="flex: 1; min-width: 120px; background: #1877f2;" onclick="copyFacebookOnly()">📘 Copy Facebook Only</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Search & History -->
+            <div class="card">
+                <h2>🔍 Search Posts 
+                    <button class="refresh-btn" onclick="loadAllPosts()" style="float: right;">🔄 Refresh</button>
+                </h2>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search by movie name..." onkeyup="searchPosts()">
+                    <button class="btn btn-secondary" onclick="searchPosts()">🔍 Search</button>
+                </div>
+                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 15px;" onclick="loadAllPosts()">
+                    📜 Show All Posts
+                </button>
+                <div id="postsList" class="posts-list">
+                    <div class="loading">Loading posts...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./tg/tg_script.js"></script>
+</body>
+</html>

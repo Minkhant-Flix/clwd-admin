@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="./assets/clwd.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Cache Control Meta Tags -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.youtube.com https://cdn-link.mmovie.site https://uat-api.mmovie.site https://movie-api2.mmovie.site https://*.google.com https://*.googleapis.com https://*.gstatic.com https://static.cloudflareinsights.com;
+  style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn-link.mmovie.site;
+  font-src 'self' data: https://cdn-link.mmovie.site https://fonts.gstatic.com blob:;
+  img-src 'self' data: https: http: blob:;
+  connect-src 'self' https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net https://cdn-link.mmovie.site https://uat-api.mmovie.site https://movie-api2.mmovie.site ws: wss:;
+  frame-src https://www.youtube.com https://www.youtube-nocookie.com https://accounts.google.com 'self';
+  media-src 'self' blob:;
+  base-uri 'self';
+  form-action 'self';
+">
+
+  <title>CLWD Admin Panel</title>
+  <!-- Custom CDN Bootstrap -->
+  <link href="https://cdn-link.mmovie.site/helper/BS-5.3.8/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome (CDN) -->
+  <link rel="stylesheet" href="https://cdn-link.mmovie.site/helper/fontawsome-7.2.0/css/all.min.css">
+  
+  <link rel="stylesheet" type="text/css" href="./assets/admin.css">
+</head>
+<body>
+  <div class="admin-container">
+    <!-- Login Section -->
+    <div id="loginBox">
+      <div class="login-box fade-in">
+        <div class="mb-4">
+          <i class="fas fa-lock fa-3x text-primary mb-3"></i>
+          <h2 class="fw-bold">CLWD Admin Panel</h2>
+        </div>
+        
+        <div class="mb-3">
+          <input id="email" class="form-control mb-3" placeholder="Email" autocomplete="email">
+          <div class="password-container">
+            <input id="password" type="password" class="form-control" placeholder="Password" autocomplete="current-password">
+            <button type="button" class="password-toggle" onclick="togglePassword()">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        
+        <button class="btn btn-primary w-100" onclick="login()">
+          <i class="fas fa-sign-in-alt me-2"></i>Login
+        </button>
+        
+        <div class="mt-3 text-muted small">
+          <i class="fas fa-info-circle me-1"></i>
+          login with your admin email & password.
+        </div>
+      </div>
+
+      <!-- OTP Verification Modal (initially hidden) -->
+      <div id="otpModal" style="display: none;" class="mt-3">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-shield-alt me-2"></i>Two‑Factor Verification</h5>
+            <p class="text-muted small">An OTP has been sent to <strong id="otpEmailDisplay"></strong></p>
+            <div class="mb-3">
+              <label for="otpCode" class="form-label">Enter 6‑digit OTP</label>
+              <input type="text" id="otpCode" class="form-control" placeholder="123456" maxlength="6" inputmode="numeric">
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-success flex-grow-1" onclick="verifyOTP()">
+                <i class="fas fa-check me-1"></i>Verify
+              </button>
+              <button class="btn btn-outline-secondary" onclick="requestOTP()">
+                <i class="fas fa-redo me-1"></i>Resend
+              </button>
+            </div>
+            <div class="mt-2 text-center">
+              <a href="#" onclick="cancelOTP()" class="text-muted small">Cancel and go back</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forgot Password Modal (hidden initially) -->
+    <div id="forgotPasswordModal" style="display: none;" class="mt-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fas fa-key me-2"></i>Reset Password</h5>
+          <p class="text-muted small">Enter your email to receive OTP</p>
+          <div class="mb-3">
+            <input type="email" id="resetEmail" class="form-control" placeholder="Your email">
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary flex-grow-1" onclick="sendResetOTP()">
+              <i class="fas fa-paper-plane me-1"></i>Send OTP
+            </button>
+            <button class="btn btn-outline-secondary" onclick="cancelForgotPassword()">
+              <i class="fas fa-times me-1"></i>Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Password Form (hidden initially) -->
+    <div id="resetPasswordForm" style="display: none;" class="mt-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fas fa-lock me-2"></i>Set New Password</h5>
+          <p class="text-muted small">OTP verified. Enter new password.</p>
+          <div class="mb-3">
+            <input type="password" id="newPassword" class="form-control" placeholder="New password">
+          </div>
+          <div class="mb-3">
+            <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm new password">
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-success flex-grow-1" onclick="resetPassword()">
+              <i class="fas fa-save me-1"></i>Reset Password
+            </button>
+            <button class="btn btn-outline-secondary" onclick="cancelResetPassword()">
+              <i class="fas fa-times me-1"></i>Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Dashboard (hidden initially) -->
+    <div id="uploadBox" style="display:none;">
+      <div class="admin-header">
+        <h2><i class="fas fa-cogs me-2"></i>Admin Dashboard</h2>
+        <p class="mb-0">Manage your posts and content</p>
+      </div>
+      
+      <div class="admin-content">
+        <button class="btn btn-outline-danger logout-btn" onclick="logout()">
+          <i class="fas fa-sign-out-alt me-1"></i>Logout
+        </button>
+        
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#postsTab" type="button" role="tab">
+              <i class="fas fa-newspaper me-1"></i>Posts Management
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ads-tab" data-bs-toggle="tab" data-bs-target="#adsTab" type="button" role="tab">
+              <i class="fas fa-ad me-1"></i>Ads Management
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="telegram-tab" data-bs-toggle="tab" data-bs-target="#telegramTab" type="button" role="tab">
+              <i class="fab fa-telegram me-1 text-primary"></i>Telegram Generator
+            </button>
+          </li>
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content">
+          <!-- Posts Tab -->
+          <div class="tab-pane fade show active" id="postsTab" role="tabpanel">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-plus-circle me-2"></i>Create New Post</h5>
+                    
+                    <input id="title" class="form-control mb-3" placeholder="Post Title">
+                    
+                    <!-- Rich Text Editor -->
+                    <div class="mb-3">
+                      <label class="form-label">Post Content</label>
+                      <div class="editor-toolbar">
+                        <button type="button" onclick="formatText('bold')" title="Bold"><i class="fas fa-bold"></i></button>
+                        <button type="button" onclick="formatText('italic')" title="Italic"><i class="fas fa-italic"></i></button>
+                        <button type="button" onclick="formatText('underline')" title="Underline"><i class="fas fa-underline"></i></button>
+                        <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                        <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+                        <button type="button" onclick="formatText('justifyLeft')" title="Align Left"><i class="fas fa-align-left"></i></button>
+                        <button type="button" onclick="formatText('justifyCenter')" title="Align Center"><i class="fas fa-align-center"></i></button>
+                        <button type="button" onclick="formatText('justifyRight')" title="Align Right"><i class="fas fa-align-right"></i></button>
+                        <button type="button" onclick="clearFormatting()" title="Clear Formatting"><i class="fas fa-eraser"></i></button>
+                      </div>
+                      <div 
+                        id="paragraph" 
+                        class="editor-content" 
+                        contenteditable="true" 
+                        placeholder="Write your post content here..."
+                        oninput="updateParagraphValue()"
+                      ></div>
+                    </div>
+                    
+                    <input id="imageURL" class="form-control mb-3" placeholder="Image URL">
+                    <small class="text-muted">
+                      <i class="fas fa-info-circle me-1"></i>
+                      Tip: Google Drive links will be auto-converted to thumbnail URLs
+                    </small>
+                    <input id="trailerLink" class="form-control mb-3" placeholder="Trailer Link (optional)">
+                    <input id="downloadLink" class="form-control mb-3" placeholder="Movie Link">
+                    
+                    <!-- Content Type Selection -->
+                    <div class="mb-3">
+                      <label class="form-label">Content Type</label>
+                      <div class="content-type-container p-3 bg-light rounded">
+                        <div class="form-check mb-2">
+                          <input class="form-check-input" type="radio" name="contentType" id="contentTypeMovie" value="censored" checked>
+                          <label class="form-check-label fw-bold" for="contentTypeMovie">
+                            <i class="fas fa-eye-slash text-primary me-2"></i>Censored
+                          </label>
+                        </div>
+                        <div class="form-check mb-2">
+                          <input class="form-check-input" type="radio" name="contentType" id="contentTypeMovie" value="uncensored" checked>
+                          <label class="form-check-label fw-bold" for="contentTypeMovie">
+                            <i class="fas fa-eye text-primary me-2"></i>Uncensored
+                          </label>
+                        </div>
+                        <div class="form-check mb-2">
+                          <input class="form-check-input" type="radio" name="contentType" id="contentTypeSeries" value="Straight">
+                          <label class="form-check-label fw-bold" for="contentTypeSeries">
+                            <i class="fas fa-venus-mars text-success me-2"></i>Straight
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="contentType" id="contentTypeAnimation" value="LGBT">
+                          <label class="form-check-label fw-bold" for="contentTypeAnimation">
+                            <i class="fas fa-rainbow text-warning me-2"></i>LGBT
+                          </label>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                          <i class="fas fa-info-circle me-1"></i>
+                          Content type will be used for filtering on the main page
+                        </small>
+                      </div>
+                    </div>
+                    
+                    <!-- Genres Section -->
+                    <div class="mb-3">
+                      <label class="form-label">Genres</label>
+                      <div class="genres-container">
+                        <div class="genres-tags" id="selectedGenres"></div>
+                        <div class="input-group">
+                          <input type="text" id="genreInput" class="form-control" placeholder="Type a genre and press Enter or click Add">
+                          <button class="btn btn-outline-secondary" type="button" onclick="addGenreFromInput()">
+                            <i class="fas fa-plus"></i> Add
+                          </button>
+                        </div>
+                        <div class="mt-2">
+                          <small class="text-muted">Common genres:</small>
+                          <div class="genres-buttons mt-1">
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('Japan')">Japan</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('US')">US</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('UK')">UK</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('Russia')">Russia</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('Uncensored')">Uncensored</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('Censored')">Censored</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('BDSM')">BDSM</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('Romantic')">Romantic</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('Hidden-Camera')">Hidden-Camera</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('Myanmar')">Myanmar</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('Only-Fans')">Only-Fans</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('Gay')">Gay</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addQuickGenre('Straight')">Straight</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Rating Section -->
+                    <div class="mb-3">
+                      <label class="form-label">Rating (0-10)</label>
+                      <div class="rating-container">
+                        <div class="rating-stars mb-2" id="ratingStars">
+                          <span class="star" data-value="1"><i class="far fa-star"></i></span>
+                          <span class="star" data-value="2"><i class="far fa-star"></i></span>
+                          <span class="star" data-value="3"><i class="far fa-star"></i></span>
+                          <span class="star" data-value="4"><i class="far fa-star"></i></span>
+                          <span class="star" data-value="5"><i class="far fa-star"></i></span>
+                          <span class="star" data-value="6"><i class="far fa-star"></i></span>
+                          <span class="star" data-value="7"><i class="far fa-star"></i></span>
+                          <span class="star" data-value="8"><i class="far fa-star"></i></span>
+                          <span class="star" data-value="9"><i class="far fa-star"></i></span>
+                          <span class="star" data-value="10"><i class="far fa-star"></i></span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                          <input type="number" id="ratingValue" class="form-control form-control-sm me-2" min="0" max="10" step="0.5" value="0" style="width: 80px;" onchange="updateStarsFromInput()">
+                          <span class="text-muted small">/10</span>
+                          <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="clearRating()">
+                            <i class="fas fa-times"></i> Clear
+                          </button>
+                        </div>
+                        <div class="rating-display mt-1">
+                          <small id="ratingText" class="text-muted">No rating selected</small>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- HOT Feature Toggle -->
+                    <div class="mb-3">
+                      <label class="form-label">Featured Status</label>
+                      <div class="hot-container p-3 bg-light rounded">
+                        <div class="form-check form-switch">
+                          <input type="checkbox" id="isHot" class="form-check-input" style="transform: scale(1.3);">
+                          <label class="form-check-label fw-bold ms-2" for="isHot">
+                            <i class="fas fa-fire text-danger me-1"></i>Mark as HOT
+                          </label>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                          <i class="fas fa-info-circle me-1"></i>
+                          Hot posts will appear in the featured section on the main page
+                        </small>
+                        <div class="hot-indicator mt-2" id="hotIndicator" style="display: none;">
+                          <span class="badge bg-danger animate-pulse">
+                            <i class="fas fa-fire me-1"></i>HOT POST
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                      <input type="checkbox" id="hasDownload" class="form-check-input">
+                      <label class="form-check-label">Enable Movie Button</label>
+                    </div>
+                    
+                    <button class="btn btn-success w-100" onclick="uploadPost()">
+                      <i class="fas fa-upload me-2"></i>Publish Post
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-lg-6">
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-chart-bar me-2"></i>Quick Stats</h5>
+                    <div id="statsContainer" class="text-center">
+                      <div class="loading-spinner">
+                        <div class="spinner"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Post History Section -->
+            <div class="mt-5" id="postHistorySection">
+              <div id="postHistory" class="mt-3">
+                <div class="loading-spinner">
+                  <div class="spinner"></div>
+                  <p class="mt-2 text-muted">Loading posts...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Ads Tab -->
+          <div class="tab-pane fade" id="adsTab" role="tabpanel">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="card-title mb-0"><i class="fas fa-ad me-2"></i>Advertisement Manager</h5>
+                  <button class="btn btn-primary btn-sm" onclick="showAddAdModal()">
+                    <i class="fas fa-plus me-1"></i>Add New Ad
+                  </button>
+                </div>
+                <div id="adsListContainer">
+                  <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p class="mt-2 text-muted">Loading ads...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Telegram Tab -->
+          <div class="tab-pane fade" id="telegramTab" role="tabpanel">
+            <div class="card">
+              <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                  <i class="fab fa-telegram me-2 text-primary"></i>
+                  Telegram Post Generator
+                </h5>
+              </div>
+              <div class="card-body p-0">
+                <iframe 
+                  src="./tg_v1.html" 
+                  style="width: 100%; min-height: 700px; border: none;"
+                  title="Telegram Post Generator"
+                  loading="lazy"
+                ></iframe>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Post Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Post</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input id="editId" type="hidden">
+          <input id="editTitle" class="form-control mb-3" placeholder="Title">
+          
+          <!-- Rich Text Editor for Edit Modal -->
+          <div class="mb-3">
+            <label class="form-label">Post Content</label>
+            <div class="editor-toolbar">
+              <button type="button" onclick="formatEditText('bold')" title="Bold"><i class="fas fa-bold"></i></button>
+              <button type="button" onclick="formatEditText('italic')" title="Italic"><i class="fas fa-italic"></i></button>
+              <button type="button" onclick="formatEditText('underline')" title="Underline"><i class="fas fa-underline"></i></button>
+              <button type="button" onclick="formatEditText('insertUnorderedList')" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+              <button type="button" onclick="formatEditText('insertOrderedList')" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+              <button type="button" onclick="formatEditText('justifyLeft')" title="Align Left"><i class="fas fa-align-left"></i></button>
+              <button type="button" onclick="formatEditText('justifyCenter')" title="Align Center"><i class="fas fa-align-center"></i></button>
+              <button type="button" onclick="formatEditText('justifyRight')" title="Align Right"><i class="fas fa-align-right"></i></button>
+              <button type="button" onclick="clearEditFormatting()" title="Clear Formatting"><i class="fas fa-eraser"></i></button>
+            </div>
+            <div 
+              id="editParagraph" 
+              class="editor-content" 
+              contenteditable="true" 
+              placeholder="Write your post content here..."
+              oninput="updateEditParagraphValue()"
+            ></div>
+          </div>
+          
+          <input id="editImageURL" class="form-control mb-3" placeholder="Image URL">
+          <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Tip: Google Drive links will be auto-converted to thumbnail URLs
+          </small>
+          <input id="editTrailerLink" class="form-control mb-3" placeholder="Trailer Link (optional)">
+          <input id="editDownloadLink" class="form-control mb-3" placeholder="Download Link">
+          
+          <!-- Content Type Selection for Edit Modal -->
+          <div class="mb-3">
+            <label class="form-label">Content Type</label>
+            <div class="content-type-container p-3 bg-light rounded">
+                        <div class="form-check mb-2">
+                          <input class="form-check-input" type="radio" name="contentType" id="contentTypeMovie" value="censored" checked>
+                          <label class="form-check-label fw-bold" for="contentTypeMovie">
+                            <i class="fas fa-eye-slash text-primary me-2"></i>Censored
+                          </label>
+                        </div>
+                        <div class="form-check mb-2">
+                          <input class="form-check-input" type="radio" name="contentType" id="contentTypeMovie" value="uncensored" checked>
+                          <label class="form-check-label fw-bold" for="contentTypeMovie">
+                            <i class="fas fa-eye text-primary me-2"></i>Uncensored
+                          </label>
+                        </div>
+                        <div class="form-check mb-2">
+                          <input class="form-check-input" type="radio" name="contentType" id="contentTypeSeries" value="Straight">
+                          <label class="form-check-label fw-bold" for="contentTypeSeries">
+                            <i class="fas fa-venus-mars text-success me-2"></i>Straight
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="contentType" id="contentTypeAnimation" value="LGBT">
+                          <label class="form-check-label fw-bold" for="contentTypeAnimation">
+                            <i class="fas fa-rainbow text-warning me-2"></i>LGBT
+                          </label>
+                        </div>
+              <small class="text-muted d-block mt-2">
+                <i class="fas fa-info-circle me-1"></i>
+                Content type will be used for filtering on the main page
+              </small>
+            </div>
+          </div>
+          
+          <!-- Genres for Edit Modal -->
+          <div class="mb-3">
+            <label class="form-label">Genres</label>
+            <div class="genres-container">
+              <div class="genres-tags" id="editSelectedGenres"></div>
+              <div class="input-group">
+                <input type="text" id="editGenreInput" class="form-control" placeholder="Type a genre and press Enter or click Add">
+                <button class="btn btn-outline-secondary" type="button" onclick="addEditGenreFromInput()">
+                  <i class="fas fa-plus"></i> Add
+                </button>
+              </div>
+              <div class="mt-2">
+                <small class="text-muted">Common genres:</small>
+                <div class="genres-buttons mt-1">
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addEditQuickGenre('Action')">Action</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addEditQuickGenre('Comedy')">Comedy</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addEditQuickGenre('Drama')">Drama</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addEditQuickGenre('Horror')">Horror</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addEditQuickGenre('Sci-Fi')">Sci-Fi</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addEditQuickGenre('Thriller')">Thriller</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addEditQuickGenre('Romance')">Romance</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addEditQuickGenre('Adventure')">Adventure</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addEditQuickGenre('Fantasy')">Fantasy</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="addEditQuickGenre('Animation')">Animation</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Rating for Edit Modal -->
+          <div class="mb-3">
+            <label class="form-label">Rating (0-10)</label>
+            <div class="rating-container">
+              <div class="rating-stars mb-2" id="editRatingStars">
+                <span class="star" data-value="1"><i class="far fa-star"></i></span>
+                <span class="star" data-value="2"><i class="far fa-star"></i></span>
+                <span class="star" data-value="3"><i class="far fa-star"></i></span>
+                <span class="star" data-value="4"><i class="far fa-star"></i></span>
+                <span class="star" data-value="5"><i class="far fa-star"></i></span>
+                <span class="star" data-value="6"><i class="far fa-star"></i></span>
+                <span class="star" data-value="7"><i class="far fa-star"></i></span>
+                <span class="star" data-value="8"><i class="far fa-star"></i></span>
+                <span class="star" data-value="9"><i class="far fa-star"></i></span>
+                <span class="star" data-value="10"><i class="fas fa-star"></i></span>
+              </div>
+              <div class="d-flex align-items-center">
+                <input type="number" id="editRatingValue" class="form-control form-control-sm me-2" min="0" max="10" step="0.5" value="0" style="width: 80px;" onchange="updateEditStarsFromInput()">
+                <span class="text-muted small">/10</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="clearEditRating()">
+                  <i class="fas fa-times"></i> Clear
+                </button>
+              </div>
+              <div class="rating-display mt-1">
+                <small id="editRatingText" class="text-muted">No rating selected</small>
+              </div>
+            </div>
+          </div>
+          
+          <!-- HOT Feature Toggle for Edit Modal -->
+          <div class="mb-3">
+            <label class="form-label">Featured Status</label>
+            <div class="hot-container p-3 bg-light rounded">
+              <div class="form-check form-switch">
+                <input type="checkbox" id="editIsHot" class="form-check-input" style="transform: scale(1.3);">
+                <label class="form-check-label fw-bold ms-2" for="editIsHot">
+                  <i class="fas fa-fire text-danger me-1"></i>Mark as HOT
+                </label>
+              </div>
+              <small class="text-muted d-block mt-1">
+                <i class="fas fa-info-circle me-1"></i>
+                Hot posts will appear in the featured section on the main page
+              </small>
+              <div class="hot-indicator mt-2" id="editHotIndicator" style="display: none;">
+                <span class="badge bg-danger animate-pulse">
+                  <i class="fas fa-fire me-1"></i>HOT POST
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-check">
+            <input type="checkbox" id="editHasDownload" class="form-check-input">
+            <label class="form-check-label">Enable Movie Button</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="updatePost()">
+            <i class="fas fa-save me-1"></i>Update Post
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Facebook Post Generator Modal -->
+  <div class="modal fade" id="fbPostModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fab fa-facebook me-2 text-primary"></i>Facebook Post Generator</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Main post ကို Copy ယူပြီး Facebook မှာ တင်ပါ။ ထို့နောက် Comment ကို Copy ယူပြီး ကိုယ်တင်ထားတဲ့ Post ရဲ့ Comment မှာ ကူးထည့်ပါ။
+          </div>
+          
+          <!-- Main Post Section -->
+          <div class="mb-4">
+            <label class="form-label fw-bold text-primary">📝 Main Post (Copy this to Facebook):</label>
+            <div class="position-relative">
+              <textarea 
+                id="fbPostText" 
+                class="form-control" 
+                rows="12" 
+                readonly
+                style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; line-height: 1.5; background-color: #f0f2f5;"
+              ></textarea>
+              <button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2" onclick="copyFbPostText()" title="Copy main post to clipboard">
+                <i class="fas fa-copy me-1"></i>Copy Main Post
+              </button>
+            </div>
+          </div>
+          
+          <!-- Comment Section -->
+          <div class="mb-4">
+            <label class="form-label fw-bold text-success">💬 Comment (Copy this to comment):</label>
+            <div class="position-relative">
+              <textarea 
+                id="fbCommentText" 
+                class="form-control" 
+                rows="6" 
+                readonly
+                style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; line-height: 1.5; background-color: #f0f2f5;"
+              ></textarea>
+              <button class="btn btn-sm btn-success position-absolute top-0 end-0 m-2" onclick="copyFbCommentText()" title="Copy comment to clipboard">
+                <i class="fas fa-copy me-1"></i>Copy Comment
+              </button>
+            </div>
+            <small class="text-muted mt-1 d-block">
+              <i class="fas fa-lightbulb me-1"></i>
+              ဒီစာသားကို ကိုယ်တင်ထားတဲ့ Post ရဲ့ Comment မှာ ကူးထည့်ပါ။
+            </small>
+          </div>
+          
+          <!-- Preview Section -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Preview:</label>
+            <div class="fb-post-preview p-3 border rounded bg-light">
+              <div class="d-flex mb-3">
+                <div class="fb-avatar bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                  <i class="fas fa-user text-white"></i>
+                </div>
+                <div>
+                  <div class="fw-bold">M - Movie</div>
+                  <div class="text-muted small">Just now • <i class="fas fa-globe-asia"></i></div>
+                </div>
+              </div>
+              <div id="fbPreviewContent" style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; line-height: 1.5; white-space: pre-line;"></div>
+              <div class="mt-3 p-2 border rounded bg-white">
+                <div id="fbPreviewLink" class="text-primary small mb-1"></div>
+                <div id="fbPreviewTitle" class="fw-bold"></div>
+                <div id="fbPreviewDesc" class="text-muted small"></div>
+              </div>
+              
+              <!-- Comment Preview -->
+              <div class="mt-3 p-2 border rounded bg-white">
+                <div class="d-flex mb-2">
+                  <div class="fb-avatar bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                    <i class="fas fa-user text-white small"></i>
+                  </div>
+                  <div>
+                    <div class="fw-bold small">M - Movie</div>
+                    <div class="text-muted small">Just now</div>
+                  </div>
+                </div>
+                <div id="fbCommentPreview" style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; line-height: 1.5; white-space: pre-line; background-color: #f0f2f5; padding: 8px; border-radius: 18px;"></div>
+              </div>
+              
+              <div class="mt-3 d-flex justify-content-between border-top pt-2">
+                <button class="btn btn-sm btn-outline-secondary"><i class="far fa-thumbs-up me-1"></i>Like</button>
+                <button class="btn btn-sm btn-outline-secondary"><i class="far fa-comment me-1"></i>Comment</button>
+                <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-share me-1"></i>Share</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <h6 class="fw-bold"><i class="fas fa-cog me-2"></i>Customization Options</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-check mb-2">
+                  <input type="checkbox" id="includeWebsiteLink" class="form-check-input" checked>
+                  <label class="form-check-label" for="includeWebsiteLink">Include website link</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input type="checkbox" id="includeHashtags" class="form-check-input" checked>
+                  <label class="form-check-label" for="includeHashtags">Include hashtags</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check mb-2">
+                  <input type="checkbox" id="includeTrailerNote" class="form-check-input" checked>
+                  <label class="form-check-label" for="includeTrailerNote">Include trailer note (if available)</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input type="checkbox" id="includeEmojis" class="form-check-input" checked>
+                  <label class="form-check-label" for="includeEmojis">Include emojis</label>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-3">
+              <label class="form-label">Additional Hashtags (comma separated):</label>
+              <input type="text" id="additionalHashtags" class="form-control" placeholder="#MyanmarMovie, #Cinema, ...">
+            </div>
+            
+            <div class="mt-3">
+              <label class="form-label">Post URL (auto-generated or custom):</label>
+              <div class="input-group">
+                <input type="text" id="fbPostUrl" class="form-control" placeholder="https://mmovie.site/?post=...">
+                <button class="btn btn-outline-secondary" type="button" onclick="generateRandomUrl()">
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+              </div>
+              <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Post URL will be auto-generated when you create a new post
+              </small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="refreshFbPost()">
+            <i class="fas fa-sync-alt me-1"></i>Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Ad Modal -->
+  <div class="modal fade" id="adModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-ad me-2"></i><span id="adModalTitle">Add New Ad</span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="adId">
+          
+          <div class="mb-3">
+            <label class="form-label">Ad Title *</label>
+            <input type="text" id="adTitle" class="form-control" placeholder="e.g., Summer Sale Banner">
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Ad Type *</label>
+            <select id="adType" class="form-select" onchange="toggleAdContentType()">
+              <option value="image">Image</option>
+              <option value="gif">GIF</option>
+              <option value="video">Video (YouTube/MP4)</option>
+              <option value="html">HTML Code</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Content *</label>
+            <div id="adContentInputs">
+              <input type="text" id="adContent" class="form-control" placeholder="Image/GIF/Video URL or HTML code">
+            </div>
+            <small class="text-muted">For images/GIFs: paste direct image URL. For videos: paste YouTube link or MP4 URL.</small>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Click Link (URL)</label>
+            <input type="url" id="adLink" class="form-control" placeholder="https://example.com/your-offer">
+            <small class="text-muted">Where users go when they click the ad</small>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Display Duration (seconds)</label>
+              <input type="number" id="adDuration" class="form-control" value="15" min="5" max="60">
+              <small class="text-muted">How many seconds before close button appears</small>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Frequency (per day)</label>
+              <input type="number" id="adFrequency" class="form-control" value="3" min="1" max="20">
+              <small class="text-muted">Max times this ad shows per user per day</small>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Placement</label>
+            <select id="adPlacement" class="form-select">
+              <option value="both">Both Website & App</option>
+              <option value="web">Website Only</option>
+              <option value="app">App Only</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Show on Specific Post</label>
+            <select id="adPostId" class="form-select">
+              <option value="all">All Posts</option>
+            </select>
+            <small class="text-muted">Select a specific post to show this ad only when that post is viewed</small>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Start Date (Optional)</label>
+              <input type="datetime-local" id="adStartDate" class="form-control">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">End Date (Optional - Auto Delete)</label>
+              <input type="datetime-local" id="adEndDate" class="form-control">
+              <small class="text-muted">Ad will be automatically deleted after this date</small>
+            </div>
+          </div>
+          
+          <!-- Preview Section -->
+          <div class="mb-3">
+            <label class="form-label">Preview</label>
+            <div id="adPreview" class="border rounded p-3 text-center bg-light" style="min-height: 150px;">
+              <span class="text-muted">Fill in the fields to see preview</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="saveAd()">
+            <i class="fas fa-save me-1"></i>Save Ad
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn-link.mmovie.site/helper/BS-5.3.8/js/bootstrap.bundle.min.js"></script>
+  <!-- ဒီလို ထည့်ဖို့လိုပါတယ် -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="./assets/admin.js"></script>
+</body>
+</html>
